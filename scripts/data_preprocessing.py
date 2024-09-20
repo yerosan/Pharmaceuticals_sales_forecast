@@ -271,6 +271,25 @@ class DataProcess:
         plt.ylabel('Sales')
         plt.show()
 
+    def stores_weekday_sales (self, train):
+        # Group by stores and weekday sales
+        weekday_sales = train.groupby(['Store', 'DayOfWeek'])['Sales'].mean().reset_index()
+
+        # Line plot
+        plt.figure(figsize=(12,6))
+        sns.lineplot(x='DayOfWeek', y='Sales', hue='Store', data=weekday_sales)
+        plt.title('Sales Trends Over Weekdays and Weekends')
+        plt.show()
+    
+    def self_assortment_type(self, train):
+        # Sales by assortment type
+        plt.figure(figsize=(12,6))
+        sns.boxplot(x='Assortment', y='Sales', data=train)
+        plt.title('Sales by Assortment Type')
+        plt.show()
+
+
+
     def plot_sales_during_holidays(self,train):
         plt.figure(figsize=(10,6))
         sns.boxplot(x='StateHoliday', y='Sales', data=train)
