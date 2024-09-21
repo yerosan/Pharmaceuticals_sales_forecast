@@ -35,7 +35,7 @@ class DataProcess:
         store['PromoInterval'] = store['PromoInterval'].fillna('None')
         
         # Merging Store info with Train and Test
-        test['Open'].fillna(method='ffill', inplace=True)
+        test["Open"] = test['Open'].ffill()
         train = train.merge(store, on='Store', how='left')
         test = test.merge(store, on='Store', how='left')
         return store,train, test
