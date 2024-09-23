@@ -13,9 +13,8 @@ import datetime
 from dateutil.easter import easter
 
 import seaborn as sns
-# import logging
 
-# logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO)
 class DataProcess:
     def __init__(self):
 
@@ -46,12 +45,12 @@ class DataProcess:
         train['Year'] = train['Date'].dt.year
         train['Day'] = train['Date'].dt.day
         train['WeekOfYear'] = train['Date'].dt.isocalendar().week
-        train['is_weekend'] = train['DayOfWeek'].apply(lambda x: 1 if x in [6, 7] else 0)
+        train['is_weekend'] = train['DayOfWeek'].apply(lambda x: 1 if x in [6,7] else 0)
         test['Month'] = test['Date'].dt.month
         test['Year'] = test['Date'].dt.year
         test['Day'] = test['Date'].dt.day
         test['WeekOfYear'] = test['Date'].dt.isocalendar().week
-        test['is_weekend'] = test['DayOfWeek'].apply(lambda x: 1 if x in [6, 7] else 0)
+        test['is_weekend'] = test['DayOfWeek'].apply(lambda x: 1 if x in [6,7] else 0)
         # Creating promo and competition features
         # Competition Open time
         train['CompetitionOpenTime'] = 12 * (train['Year'] - train['CompetitionOpenSinceYear']) + \
@@ -111,12 +110,24 @@ class DataProcess:
 
 
 
-    def sales_behaviorOnholiday(self,train):
+    def sales_behaviorOnholiday(self, train):
         # Convert 'Date' to datetime
         train['Date'] = pd.to_datetime(train['Date'])
 
         # Filter for holidays
-        holiday_sales = train[train['StateHoliday'] != '0']
+        holiday_sales = train[train['StateHoliday'] != '0'].copy()  # Use .copy() to avoid SettingWithCopyWarning
+
+        # Map 'StateHoliday' values to meaningful names
+        holiday_mapping = {
+            'a': 'Public Holiday',
+            'b': 'Easter Holiday',
+            'c': 'Christmas Holiday'
+        }
+
+        holiday_sales.loc[:, 'StateHoliday'] = holiday_sales['StateHoliday'].map(holiday_mapping)
+
+        # Filter out any rows where 'StateHoliday' is still null after mapping
+        holiday_sales = holiday_sales[holiday_sales['StateHoliday'].notnull()]
 
         # Sales behavior before, during, and after holidays
         plt.figure(figsize=(12,6))
@@ -124,68 +135,32 @@ class DataProcess:
         plt.title('Sales Before, During, and After Holidays')
         plt.show()
 
-    def Seasonal_Purchase_Behaviors(self, df):
-        # Ensure 'Date' is in datetime format
-        df['Date'] = pd.to_datetime(df['Date'])
-        
-        # Create a copy to avoid modifying the original dataframe
-        df_copy = df.copy()
-        
-        # Extract the year from the date to calculate Easter
-        df_copy['Year'] = df_copy['Date'].dt.year
-        
-        # Define a function to determine if a date is within a specific holiday period
-        def is_christmas(date):
-            return (date.month == 12) & (date.day >= 18)  # Week leading to Christmas
 
-        def is_easter(date):
-            easter_date = pd.Timestamp(easter(date.year))  # Convert easter date to Timestamp
-            return (date >= (easter_date - pd.Timedelta(days=3))) & (date <= (easter_date + pd.Timedelta(days=3)))  # 3 days before and after Easter
 
-        def is_july_4th(date):
-            return (date.month == 7) & (date.day == 4)  # July 4th
+    def Seasonal_Purchase_Behaviors(self, train):
+        # Convert 'Date' to datetime
+        train['Date'] = pd.to_datetime(train['Date'])
 
-        def is_thanksgiving(date):
-            # Thanksgiving: 4th Thursday of November
-            if date.month == 11:
-                # Calculate the 4th Thursday of November
-                first_day = datetime.date(date.year, 11, 1)
-                first_thursday = first_day + pd.DateOffset(days=(3 - first_day.weekday()) % 7)  # Nearest Thursday
-                thanksgiving_day = first_thursday + pd.DateOffset(weeks=3)  # 4th Thursday
-                thanksgiving_day = pd.Timestamp(thanksgiving_day)  # Convert to Timestamp
-                return date == thanksgiving_day
-            return False
-        
-        # Label Christmas, Easter, July 4th, and Thanksgiving periods
-        df_copy['Season'] = 'Non-Holiday'
-        df_copy.loc[df_copy['Date'].apply(is_christmas), 'Season'] = 'Christmas Season'
-        df_copy.loc[df_copy['Date'].apply(is_easter), 'Season'] = 'Easter Season'
-        df_copy.loc[df_copy['Date'].apply(is_july_4th), 'Season'] = 'July 4th Season'
-        df_copy.loc[df_copy['Date'].apply(is_thanksgiving), 'Season'] = 'Thanksgiving Season'
+        # Map 'StateHoliday' values to meaningful names
+        holiday_mapping = {
+            'a': 'Public Holiday',
+            'b': 'Easter Holiday',
+            'c': 'Christmas Holiday'
+        }
 
-        # Group by 'Season' and calculate average sales
-        seasonal_sales = df_copy.groupby('Season')['Sales'].mean()
+        train['StateHoliday'] = train['StateHoliday'].map(holiday_mapping)
 
-        # Plot the seasonal sales
-        plt.figure(figsize=(10, 6))
-        seasonal_sales.plot(kind='bar', color=['#87cefa', '#ffa07a', '#20b2aa', '#ffb6c1', '#90ee90'])
-        plt.title('Average Sales During Seasonal Holidays')
-        plt.xlabel('Holiday Season')
+        # Filter for holidays (now using the descriptive names)
+        holiday_sales = train[train['StateHoliday'].notnull()]  # Excludes rows where it's not a holiday
+
+        # Barplot showing the average sales for each holiday type
+        plt.figure(figsize=(12,6))
+        sns.barplot(x='StateHoliday', y='Sales', hue='StateHoliday', data=holiday_sales,
+                palette=['#87cefa', '#ffa07a', '#20b2aa'], legend=False, errorbar=None)
+        plt.title('Average Sales for Different Holidays')
+        plt.xlabel('Holiday Type')
         plt.ylabel('Average Sales')
-        plt.xticks(rotation=0)
-        plt.show()
-        
-        # Line plot to show daily sales during Christmas, Easter, July 4th, and Thanksgiving seasons
-        plt.figure(figsize=(10, 6))
-        for season in ['Christmas Season', 'Easter Season', 'July 4th Season', 'Thanksgiving Season']:
-            season_data = df_copy[df_copy['Season'] == season].groupby('Date')['Sales'].mean()
-            plt.plot(season_data.index, season_data.values, label=season)
-        
-        plt.title('Daily Sales Trend During Seasonal Holidays')
-        plt.xlabel('Date')
-        plt.ylabel('Sales')
-        plt.legend()
-        plt.grid(True)
+
         plt.show()
 
 
@@ -236,13 +211,6 @@ class DataProcess:
         plt.title('Sales Trends Over Weekdays and Weekends')
         plt.show()
 
-    def assortment_effect_on_sales(self,train):
-        # Sales by assortment type
-        plt.figure(figsize=(12,6))
-        sns.boxplot(x='Assortment', y='Sales', data=train)
-        plt.title('Sales by Assortment Type')
-        plt.show()
-
     def competitor_affect_on_sales(self,train):
         # Scatter plot of competition distance vs sales
         plt.figure(figsize=(12,6))
@@ -282,7 +250,15 @@ class DataProcess:
         plt.show()
     
     def self_assortment_type(self, train):
+
         # Sales by assortment type
+
+        assortment_mapping={
+            'a' : "basic", 
+            'b': "extra", 
+            'c' :"extended"
+        }
+        train.loc[:, 'Assortment'] = train['Assortment'].map(assortment_mapping)
         plt.figure(figsize=(12,6))
         sns.boxplot(x='Assortment', y='Sales', data=train)
         plt.title('Sales by Assortment Type')
