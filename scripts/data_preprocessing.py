@@ -55,7 +55,9 @@ class DataProcess:
         # Impute missing values (mean for numeric, most frequent for categorical)
         imputer_numeric = SimpleImputer(strategy='mean')
         imputer_categorical = SimpleImputer(strategy='most_frequent')
-
+        
+        # Convert numerical values to strings for the entire 'StateHoliday' column
+        train["StateHoliday"] = train["StateHoliday"].astype(str)
         # Apply imputer for numeric and categorical columns
         numeric_cols = train.select_dtypes(include=np.number).columns
         categorical_cols = train.select_dtypes(include=['object', 'category']).columns
