@@ -13,6 +13,7 @@ import datetime
 from dateutil.easter import easter
 
 import seaborn as sns
+from sklearn.impute import SimpleImputer
 
 logging.basicConfig(level=logging.INFO)
 class DataProcess:
@@ -51,6 +52,16 @@ class DataProcess:
         test['Day'] = test['Date'].dt.day
         test['WeekOfYear'] = test['Date'].dt.isocalendar().week
         test['is_weekend'] = test['DayOfWeek'].apply(lambda x: 1 if x in [6,7] else 0)
+        # Impute missing values (mean for numeric, most frequent for categorical)
+        imputer_numeric = SimpleImputer(strategy='mean')
+        imputer_categorical = SimpleImputer(strategy='most_frequent')
+
+        # Apply imputer for numeric and categorical columns
+        numeric_cols = train.select_dtypes(include=np.number).columns
+        categorical_cols = train.select_dtypes(include=['object', 'category']).columns
+       
+        train[numeric_cols] = imputer_numeric.fit_transform(train[numeric_cols])
+        train[categorical_cols] = imputer_categorical.fit_transform(train[categorical_cols])
         # Creating promo and competition features
         # Competition Open time
         train['CompetitionOpenTime'] = 12 * (train['Year'] - train['CompetitionOpenSinceYear']) + \
@@ -312,6 +323,15 @@ class DataProcess:
         plt.xlabel('Date')
         plt.ylabel('Total Sales')
         plt.show()
+
+    def save_processed_data_to_csv(self,processed_data, filename):
+        # Save the DataFrame to a CSV file
+        processed_data.to_csv(filename, index=False)
+        print(f"Data saved to {filename}")
+        
+
+    # Example usage
+    # Assuming 'train' is your processed DataFrame
 
 
 
