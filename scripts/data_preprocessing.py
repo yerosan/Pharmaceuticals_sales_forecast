@@ -188,18 +188,34 @@ class DataProcess:
         plt.show()
 
     def promos_deployement(self, train):
+        # Ensure 'StoreType' and 'Promo' are treated as categorical variables
+        train['StoreType'] = train['StoreType'].astype('category')
+        train['Promo'] = train['Promo'].astype('category')
+
         # Promo effectiveness by store type
         plt.figure(figsize=(12,6))
         sns.boxplot(x='StoreType', y='Sales', hue='Promo', data=train)
         plt.title('Promo Effectiveness by Store Type')
+        plt.xlabel('Store Type')
+        plt.ylabel('Sales')
         plt.show()
 
+
     def store_closing_times(self, train):
+        # Map Open column to 'Closed' and 'Open' strings
+        train['Open'] = train['Open'].map({0: 'Closed', 1: 'Open'})
+
+        # Convert 'Open' to categorical type to avoid the warning
+        train['Open'] = train['Open'].astype('category')
+
         # Customer behavior during store open and close
         plt.figure(figsize=(12,6))
         sns.boxplot(x='Open', y='Customers', data=train)
         plt.title('Customer Behavior During Store Open and Close')
+        plt.xlabel('Store Status')
+        plt.ylabel('Number of Customers')
         plt.show()
+
 
     def store_on_holiday(self, train):
         # Group by stores and weekday sales
