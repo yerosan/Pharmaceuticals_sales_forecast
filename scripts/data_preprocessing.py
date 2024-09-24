@@ -33,6 +33,9 @@ class DataProcess:
         store['Promo2SinceWeek'] = store['Promo2SinceWeek'].fillna(0)
         store['Promo2SinceYear'] = store['Promo2SinceYear'].fillna(0)
         store['PromoInterval'] = store['PromoInterval'].fillna('None')
+
+        # Convert numerical values to strings for the entire 'StateHoliday' column
+        train["StateHoliday"] = train["StateHoliday"].astype(str)
         
         # Merging Store info with Train and Test
         test["Open"] = test['Open'].ffill()
