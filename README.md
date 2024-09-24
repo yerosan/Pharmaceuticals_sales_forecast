@@ -41,7 +41,7 @@ git clone https://github.com/yerosan/Pharmaceuticals_sales_forecast.git
 pip install -r requirements.txt
 ```
 ### Usage
-Run the scripts in the scripts folder to preprocess data and build models. The app.py script can be used for running the main application.
+Run the scripts in the notebook folder to preprocess data and build models. The app.py script can be used for running the main application to forcast future sales based on the input.
 
 #### License
 This project is licensed under the MIT License.
