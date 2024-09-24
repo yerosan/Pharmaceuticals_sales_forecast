@@ -11,7 +11,7 @@ app = FastAPI()
 # Load the pre-trained model from Task 2
 MODEL_PATH = '../result/lstm_model.h5'
 
-# Load the model (Make sure the model is serialized with joblib/pickle)
+# Load the model 
 try:
     model = load_model(MODEL_PATH)
 except Exception as e:
