@@ -190,18 +190,40 @@ class DataProcess:
         sns.scatterplot(x='Customers', y='Sales', data=train)
         plt.title('Sales vs. Number of Customers')
         plt.show()
+
     
-    def Promosion_attract_On_sales(self, train):
-        # Sales and customers with promo and without promo
-        plt.figure(figsize=(12,6))
-        sns.boxplot(x='Promo', y='Sales', data=train)
-        plt.title('Sales During Promo vs. Non-Promo Periods')
+    def Promotion_effect_on_sales_monthly(self, train):
+        # Convert 'Date' column to datetime if not already
+        train['Date'] = pd.to_datetime(train['Date'])
+        
+        # Add a new column 'Month' to represent the year and month
+        train['Month'] = train['Date'].dt.to_period('M')
+
+        # Group data by 'Month' and 'Promo' and calculate the mean sales for each month
+        monthly_sales = train.groupby(['Month', 'Promo'])['Sales'].mean().unstack()
+
+        # Plot sales over time (monthly)
+        plt.figure(figsize=(14,8))
+        
+        # Plot sales with promo
+        plt.plot(monthly_sales.index.to_timestamp(), monthly_sales[1], 
+                label='Sales with Promo', color='green', marker='o')
+        
+        # Plot sales without promo
+        plt.plot(monthly_sales.index.to_timestamp(), monthly_sales[0], 
+                label='Sales without Promo', color='blue', marker='o')
+        
+        # Add labels and title
+        plt.title('Monthly Average Sales with and without Promotion (2013-2015)', fontsize=16)
+        plt.xlabel('Month', fontsize=12)
+        plt.ylabel('Average Sales', fontsize=12)
+        
+        # Show legend
+        plt.legend()
+        
+        # Display the plot
         plt.show()
 
-        plt.figure(figsize=(12,6))
-        sns.boxplot(x='Promo', y='Customers', data=train)
-        plt.title('Customers During Promo vs. Non-Promo Periods')
-        plt.show()
 
     def promos_deployement(self, train):
         # Ensure 'StoreType' and 'Promo' are treated as categorical variables
@@ -249,6 +271,32 @@ class DataProcess:
         sns.scatterplot(x='CompetitionDistance', y='Sales', data=train)
         plt.title('Competition Distance vs Sales')
         plt.show()
+    
+
+    def competitor_affect_on_sales_line(self, train):
+        # Create bins for 'CompetitionDistance'
+        bins = pd.cut(train['CompetitionDistance'], bins=10)  # Adjust the number of bins if necessary
+
+        # Group by the bins and calculate the mean sales for each bin
+        binned_sales = train.groupby(bins)['Sales'].mean()
+
+        # Plot sales vs competition distance bins
+        plt.figure(figsize=(12,6))
+        
+        # Plot the average sales for each competition distance bin
+        plt.plot(binned_sales.index.astype(str), binned_sales, marker='o', color='orange')
+        
+        # Add labels and title
+        plt.title('Average Sales Across Competition Distance Bins', fontsize=16)
+        plt.xlabel('Competition Distance Bins', fontsize=12)
+        plt.ylabel('Average Sales', fontsize=12)
+        
+        # Rotate x-axis labels for better readability
+        plt.xticks(rotation=45)
+        
+        # Display the plot
+        plt.show()
+
 
     def Reopening_New_Competitors_affects(self, store,train):
         # Fill missing values in competition distance
@@ -321,22 +369,33 @@ class DataProcess:
         plt.ylabel('Sales')
         plt.show()
     
-    def plot_sales_over_time(self,train):
+
+    def plot_sales_seasonality(self, train):
+        # Ensure 'Date' column is in datetime format
+        train['Date'] = pd.to_datetime(train['Date'])
+        
+        # Extract month from the 'Date' column
+        train['Month'] = train['Date'].dt.month
+
+        # Group by 'Month' and calculate the average sales for each month
+        monthly_sales = train.groupby('Month')['Sales'].mean()
+
+        # Plot the monthly sales trends
         plt.figure(figsize=(14,8))
-        train.groupby('Date')['Sales'].sum().plot()
-        plt.title('Total Sales Over Time')
-        plt.xlabel('Date')
-        plt.ylabel('Total Sales')
+        monthly_sales.plot(kind='line', marker='o', color='green')
+        plt.title('Average Sales by Month (Seasonality Trends)')
+        plt.xlabel('Month')
+        plt.ylabel('Average Sales')
+        plt.xticks(range(1, 13))  # Set x-ticks to represent months (1-12)
+        plt.grid(True)
         plt.show()
+
 
     def save_processed_data_to_csv(self,processed_data, filename):
         # Save the DataFrame to a CSV file
         processed_data.to_csv(filename, index=False)
         print(f"Data saved to {filename}")
         
-
-    # Example usage
-    # Assuming 'train' is your processed DataFrame
 
 
 

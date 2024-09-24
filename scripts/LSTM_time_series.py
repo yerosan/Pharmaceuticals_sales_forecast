@@ -6,6 +6,10 @@ from sklearn.preprocessing import MinMaxScaler
 from statsmodels.tsa.stattools import adfuller
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.optimizers import Adam
+
 
 # ----- Step 1: Data Preprocessing -----
 
@@ -46,10 +50,20 @@ class LSTMModel:
     # Scaling data using MinMaxScaler
     def scale_data(self, data):
         # Columns to scale
-        columns_to_scale = ['Sales', 'Customers', 'CompetitionDistance', 'CompetitionOpenTime', 'Promo2OpenTime']
+        columns_to_scale = ['Customers', 'CompetitionDistance', 'CompetitionOpenTime', 'Promo2OpenTime']
+        target_column = ['Sales']
+        # Initialize the scaler
         scaler = MinMaxScaler(feature_range=(0, 1))
+
+        # Fit and transform the features
         data[columns_to_scale] = scaler.fit_transform(data[columns_to_scale])
-        return data
+
+        # Fit and transform the target
+        unscaled_target=data[target_column]
+        scaled_target = scaler.fit_transform(data[target_column])
+        # scaler = MinMaxScaler(feature_range=(0, 1))
+        # data[columns_to_scale] = scaler.fit_transform(data[columns_to_scale])
+        return scaler,scaled_target,unscaled_target,data
     
     def managinig_data_types(self,df):
         # One-hot encoding categorical features
@@ -84,7 +98,7 @@ class LSTMModel:
 
         return X_train,y_train, X_test,y_test
 
-    # ----- Step 2: Building LSTM Model -----
+    #--------- Building LSTM Model -----
     def build_lstm_model(self, n_timesteps, n_features):
         # Build LSTM model
         model = Sequential()
@@ -95,5 +109,6 @@ class LSTMModel:
         # Compile the model
         model.compile(optimizer='adam', loss='mean_squared_error')
         return model
+    
     
 
